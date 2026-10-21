@@ -148,6 +148,27 @@ packet captures** of a live assessment session:
 Together these established which checks are purely client-side (and therefore patchable),
 which are page-side and what they send, and which remain server-side.
 
+## Recommendation: type your answers instead of pasting
+
+If an assessment is reviewed or uses Coursera's integrity features, **type your answers
+rather than pasting**. This patch cannot hide paste activity, for four reasons:
+
+1. **Every paste is reported.** Each text and rich-text answer field sends a
+   `pasting_detection` event to Coursera containing the pasted text length, question id,
+   part number, assignment id, branch id and your user id.
+2. **Some assessments warn visibly.** When paste deterrence is enabled, the page shows an
+   on-screen warning immediately after a paste.
+3. **The pattern is obvious.** Typing produces a stream of per-keystroke events
+   (`..._text_input_typing`, `..._backspace`); a paste produces zero keystrokes and one
+   event with a large character count — an answer that appears instantly is easy to spot.
+4. **Content checks run on the server.** On submission, `IntegrityCheck` compares your text
+   with other learners' submissions (text similarity) and runs gibberish detection. That
+   happens server-side and no client patch can change the result.
+
+Typing in your own words avoids all four signals. Copying text *out* of the app (e.g. into
+notes) is not what these events measure — it is pasting **into** answer fields that is
+tracked.
+
 ## Limitations and risk
 
 - **Media proctoring is not affected.** If an assessment records camera/mic/screen, that
