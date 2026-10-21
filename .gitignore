@@ -1,0 +1,12 @@
+# patch artifacts and local data
+*.asar
+*.asar.orig-*
+*.pyc
+__pycache__/
+app_patched.asar
+test_out.asar
+
+# local captures / logs / analysis output
+*.pcapng
+*.pcap
+*.log
