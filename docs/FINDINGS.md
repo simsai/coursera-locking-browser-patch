@@ -45,7 +45,10 @@ still starts. The EXE signature is untouched.
 4. **Global shortcut blocker** — swallows Alt+Tab, Ctrl+C/V/X/P/T/R, Ctrl+Shift+R,
    PrintScreen, F11, Alt+F4 (Windows) and shows a "Forbidden Action" dialog.
 5. **Close prevention** — window close is cancelled until a `submission-complete` /
-   `terminate-browser` deep link arrives.
+   `terminate-browser` deep link arrives. Note: `canClose()` is also consulted by the
+   deep-link state machine, so forcing it to `true` without adjusting that routing makes
+   the app skip the `submission-complete` termination branch and stay open after submit.
+   The patcher updates both sites.
 6. **Navigation allowlist** — only `coursera.org` hosts may be navigated to; `window.open`
    is denied and allowed URLs load in the same window.
 7. **Content protection** — `setContentProtection(true)` hides the window from screen

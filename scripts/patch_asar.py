@@ -70,6 +70,13 @@ CORE_EDITS = [
         't.canClose=function(){return l||t.isDevelopMode}',
         't.canClose=function(){return!0}',
     ),
+    # 5b. canClose() is also part of the deep-link state machine: with it always true,
+    #     the "submission-complete" branch was never reached and the app stopped
+    #     auto-terminating after submit. Restore the original routing.
+    (
+        'else if(!_(t.host)||(0,m.canClose)()&&!g.develop){',
+        'else if(!_(t.host)){',
+    ),
     # 6. content protection off
     (
         'e.setContentProtection(!0),e.setMenuBarVisibility(!1)',
@@ -184,11 +191,10 @@ def patch_bundle(path, with_guard=True):
     with open(path, encoding="utf-8") as f:
         src = f.read()
 
-    if "checkViolations=()=>i(void 0,void 0,void 0,(function*(){return[]}))" in src:
-        print("  bundle already patched (core edits present)")
-        return False
-
+    changed = False
     for old, new in CORE_EDITS:
+        if new in src:
+            continue  # already applied
         n = src.count(old)
         if n != 1:
             raise SystemExit(
@@ -197,8 +203,9 @@ def patch_bundle(path, with_guard=True):
                 "Anchor: %s..." % (n, old[:70])
             )
         src = src.replace(old, new, 1)
+        changed = True
 
-    if with_guard:
+    if with_guard and GUARD_MARKER not in src:
         if CREATE_ANCHOR not in src:
             raise SystemExit("ERROR: createWindow anchor missing")
         src = src.replace(
@@ -209,6 +216,7 @@ def patch_bundle(path, with_guard=True):
         if GUARD_ANCHOR not in src:
             raise SystemExit("ERROR: guard anchor missing")
         src = src.replace(GUARD_ANCHOR, GUARD_ANCHOR + GUARD_CODE, 1)
+        changed = True
 
     with open(path, "w", encoding="utf-8", newline="") as f:
         f.write(src)

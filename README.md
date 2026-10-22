@@ -96,6 +96,9 @@ python scripts\patch_asar.py --restore
 
 or copy `app.asar.orig-0.6.6` over `app.asar` with the app closed.
 
+**Already patched with an older build?** Just run the patcher again — it is idempotent and
+applies only the edits that are missing (for example the submission-close fix).
+
 Re-apply after any reinstall or forced update (a `426` from Coursera means the server wants
 a newer client).
 
@@ -104,7 +107,7 @@ a newer client).
 The entire lock-down logic lives in the app's JavaScript bundle
 (`resources/app.asar → .webpack/main/index.js`). Electron fuses in the shipped EXE have
 `EnableEmbeddedAsarIntegrityValidation` **disabled**, so the archive can be repacked
-without breaking the signature. The script rewrites six exact code sites:
+without breaking the signature. The script rewrites seven exact code sites:
 
 1. `checkViolations()` → returns `[]` (process + display checks).
 2. `createWindow` options → `frame:true, kiosk:false, fullscreen:false, movable:true,
@@ -113,6 +116,11 @@ without breaking the signature. The script rewrites six exact code sites:
 4. `blockAccelerators()` → no-op.
 5. `canClose()` → `true`.
 6. `setContentProtection(true)` → `false`.
+7. The deep-link routing condition that referenced `canClose()` is restored, so the
+   `submission-complete` event still shows the "Submission Complete" dialog, opens the
+   course page in your normal browser and closes the app. (`canClose()` is used by the
+   deep-link state machine as well as by the window-close handler; patching it alone made
+   the app skip that branch and stay open after submitting.)
 
 The optional guard attaches the Chromium DevTools protocol (`1.3`) to the exam window and
 calls `Page.addScriptToEvaluateOnNewDocument` with a script that runs **before any page
